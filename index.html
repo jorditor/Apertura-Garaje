@@ -123,6 +123,15 @@
       if (msg.destinationName === TOPIC_ST) {
         console.log("Estado garaje:", msg.payloadString);
       }
+      if (msg.destinationName === TOPIC_CONFIRM && msg.payloadString === "1") {
+        var st = document.getElementById("status");
+        st.textContent = "✓ Puerta abierta confirmada";
+        st.className = "status ok";
+        setTimeout(function() {
+          st.textContent = "";
+          st.className = "status";
+        }, 5000);
+      }
     };
 
     setEstado("conectando");
@@ -137,6 +146,7 @@
         setEstado("conectado");
         document.getElementById("btnAbrir").disabled = false;
         client.subscribe(TOPIC_ST);
+        client.subscribe(TOPIC_CONFIRM);
       },
       onFailure: function(e) {
         conectado = false;
