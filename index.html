@@ -32,6 +32,7 @@
     .status.err { color: #e94560; }
     .token-badge { background: #0f3460; border: 1px solid #2e6da4; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; margin-bottom: 20px; display: inline-block; }
     .token-badge span { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
+    .tiempo-restante { font-size: 13px; color: #f0c040; margin-top: 6px; min-height: 18px; }
     /* Sección invitar — solo modo admin */
     .seccion-invitar { margin-top: 10px; border-top: 1px solid #2a2a4a; padding-top: 20px; }
     .seccion-invitar h2 { font-size: 14px; color: #aaa; margin-bottom: 14px; letter-spacing: 1px; }
@@ -56,6 +57,7 @@
   <div id="tokenBadge"></div>
   <button class="btn-abrir" id="btnAbrir" onclick="abrir()" disabled>ABRIR</button>
   <div class="status" id="status"></div>
+  <div class="tiempo-restante" id="tiempoRestante"></div>
 
   <!-- Sección invitar: solo visible en modo admin -->
   <div class="seccion-invitar" id="secInvitar" style="display:none">
@@ -79,6 +81,33 @@
   var modoInvitado = false;
   var tokenInvitado = "";
   var urlActual = "";
+  var minutosRestantes = 0;
+  var timerInterval = null;
+
+  function formatTiempo(minutos) {
+    if (minutos <= 0) return "Acceso caducado";
+    var h = Math.floor(minutos / 60);
+    var m = minutos % 60;
+    if (h > 0) return "Acceso válido: " + h + "h " + m + "min";
+    return "Acceso válido: " + m + " min";
+  }
+
+  function iniciarCuentaAtras(minutos) {
+    minutosRestantes = minutos;
+    document.getElementById("tiempoRestante").textContent = formatTiempo(minutosRestantes);
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(function() {
+      minutosRestantes--;
+      if (minutosRestantes <= 0) {
+        document.getElementById("tiempoRestante").textContent = "⚠ Acceso caducado";
+        document.getElementById("tiempoRestante").style.color = "#e94560";
+        document.getElementById("btnAbrir").disabled = true;
+        clearInterval(timerInterval);
+      } else {
+        document.getElementById("tiempoRestante").textContent = formatTiempo(minutosRestantes);
+      }
+    }, 60000);  // actualizar cada minuto
+  }
 
   function getToken() {
     var params = new URLSearchParams(window.location.search);
@@ -113,6 +142,9 @@
       client.subscribe("garaje/confirmacion");
       client.subscribe("garaje/token_ok");
       client.subscribe("garaje/token_generado");
+      client.subscribe("garaje/tiempo_token");
+      // Si es invitado, consultar tiempo restante al conectar
+      if (modoInvitado) client.publish("garaje/consulta_token", tokenInvitado);
     });
 
     client.on("error", function() { setEstado("desconectado"); });
@@ -122,6 +154,17 @@
       var msg = payload.toString();
       var btn = document.getElementById("btnAbrir");
       var st  = document.getElementById("status");
+
+      if (topic === "garaje/tiempo_token") {
+        var mins = parseInt(msg);
+        if (mins > 0) {
+          iniciarCuentaAtras(mins);
+        } else {
+          document.getElementById("tiempoRestante").textContent = "⚠ Acceso caducado";
+          document.getElementById("tiempoRestante").style.color = "#e94560";
+          document.getElementById("btnAbrir").disabled = true;
+        }
+      }
 
       if (topic === "garaje/confirmacion" && msg === "1") {
         st.textContent = "✓ Puerta abierta confirmada"; st.className = "status ok";
