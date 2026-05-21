@@ -148,7 +148,7 @@
       client.subscribe("garaje/token_ok");
       client.subscribe("garaje/token_generado");
       client.subscribe("garaje/tiempo_token");
-      client.subscribe("garaje/puerta");
+      //client.subscribe("garaje/puerta");
       // Si es invitado, consultar tiempo restante al conectar
       if (modoInvitado) client.publish("garaje/consulta_token", tokenInvitado);
     });
