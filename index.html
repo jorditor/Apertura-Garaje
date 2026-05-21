@@ -7,47 +7,45 @@
   <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .container { text-align: center; padding: 40px 30px; width: 100%; max-width: 360px; }
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; }
+    .container { text-align: center; padding: 20px 30px; width: 100%; max-width: 380px; }
     h1 { font-size: 22px; color: #aaa; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
-    .subtitulo { font-size: 13px; color: #555; margin-bottom: 20px; }
-    .estado-mqtt {
-      font-size: 13px; padding: 6px 16px; border-radius: 20px;
-      display: inline-block; margin-bottom: 40px; transition: all 0.3s;
-    }
+    .subtitulo { font-size: 13px; color: #555; margin-bottom: 16px; }
+    .estado-mqtt { font-size: 13px; padding: 6px 16px; border-radius: 20px; display: inline-block; margin-bottom: 30px; }
     .conectado    { background: #1a4a1a; color: #4ecca3; border: 1px solid #4ecca3; }
     .desconectado { background: #4a1a1a; color: #e94560; border: 1px solid #e94560; }
     .conectando   { background: #3a3a1a; color: #f0c040; border: 1px solid #f0c040; }
     .btn-abrir {
       background: radial-gradient(circle at 35% 35%, #ff6b6b, #e94560);
       color: white; border: none; border-radius: 50%;
-      width: 160px; height: 160px; font-size: 20px; font-weight: bold;
+      width: 150px; height: 150px; font-size: 20px; font-weight: bold;
       cursor: pointer; letter-spacing: 2px;
-      box-shadow: 0 0 30px rgba(233,69,96,0.4), 0 6px 20px rgba(0,0,0,0.4);
-      transition: all 0.15s; display: block; margin: 0 auto 30px;
+      box-shadow: 0 0 30px rgba(233,69,96,0.4);
+      transition: all 0.15s; display: block; margin: 0 auto 20px;
     }
     .btn-abrir:active:not(:disabled) { transform: scale(0.93); }
     .btn-abrir:disabled { background: radial-gradient(circle at 35% 35%, #555, #444); box-shadow: none; cursor: not-allowed; }
     .btn-abrir.abierto { background: radial-gradient(circle at 35% 35%, #4ecca3, #2eaa83); box-shadow: 0 0 30px rgba(78,204,163,0.5); }
     .btn-abrir.error   { background: radial-gradient(circle at 35% 35%, #e94560, #c0392b); }
-    .status { font-size: 15px; min-height: 22px; color: #aaa; transition: color 0.3s; }
-    .status.ok   { color: #4ecca3; }
-    .status.err  { color: #e94560; }
-    .token-badge {
-      background: #0f3460; border: 1px solid #2e6da4;
-      border-radius: 8px; padding: 8px 16px;
-      font-size: 12px; color: #aaa; margin-bottom: 20px;
-      display: inline-block;
-    }
+    .status { font-size: 14px; min-height: 20px; color: #aaa; margin-bottom: 20px; }
+    .status.ok  { color: #4ecca3; }
+    .status.err { color: #e94560; }
+    .token-badge { background: #0f3460; border: 1px solid #2e6da4; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; margin-bottom: 20px; display: inline-block; }
     .token-badge span { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
+    /* Sección invitar — solo modo admin */
+    .seccion-invitar { margin-top: 10px; border-top: 1px solid #2a2a4a; padding-top: 20px; }
+    .seccion-invitar h2 { font-size: 14px; color: #aaa; margin-bottom: 14px; letter-spacing: 1px; }
+    .btn-inv { background: #0f3460; color: #4ecca3; border: 1px solid #2e6da4; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; width: 100%; margin-bottom: 16px; }
+    .btn-inv:disabled { opacity: 0.5; cursor: not-allowed; }
+    .enlace-generado { background: #0a2040; border: 1px solid #2e6da4; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: none; }
+    .enlace-token { font-size: 22px; font-weight: bold; color: #4ecca3; letter-spacing: 3px; margin-bottom: 8px; }
+    .enlace-url { font-size: 11px; color: #888; word-break: break-all; margin-bottom: 10px; }
+    .btn-copiar { background: #e94560; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 13px; cursor: pointer; }
+    .btn-copiar.copiado { background: #2eaa83; }
+    .tokens-activos { text-align: left; }
+    .token-item { background: #0f2040; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .token-item-code { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
+    .token-item-tiempo { color: #888; }
   </style>
 </head>
 <body>
@@ -58,23 +56,30 @@
   <div id="tokenBadge"></div>
   <button class="btn-abrir" id="btnAbrir" onclick="abrir()" disabled>ABRIR</button>
   <div class="status" id="status"></div>
+
+  <!-- Sección invitar: solo visible en modo admin -->
+  <div class="seccion-invitar" id="secInvitar" style="display:none">
+    <h2>INVITAR</h2>
+    <button class="btn-inv" id="btnGenerar" onclick="generarEnlace()" disabled>Generar enlace (4h)</button>
+    <div class="enlace-generado" id="enlaceGenerado">
+      <div class="enlace-token" id="tokenGenerado"></div>
+      <div class="enlace-url" id="urlGenerada"></div>
+      <button class="btn-copiar" id="btnCopiar" onclick="copiarEnlace()">Copiar enlace</button>
+    </div>
+  </div>
 </div>
 
 <script>
-  var BROKER   = "wss://d3c63be4f2464ff7a1d80943eae17c28.s1.eu.hivemq.cloud:8884/mqtt";
-  var USER     = "Jordi";
-  var PASS     = "1923Jtlcom.";
-  var TOPIC_ABRIR   = "garaje/abrir";
-  var TOPIC_INVITADO = "garaje/invitado";
-  var TOPIC_ESTADO  = "garaje/estado";
-  var TOPIC_CONFIRM = "garaje/confirmacion";
-  var TOPIC_TOKEN_OK = "garaje/token_ok";
+  var BROKER         = "wss://d3c63be4f2464ff7a1d80943eae17c28.s1.eu.hivemq.cloud:8884/mqtt";
+  var USER           = "Jordi";
+  var PASS           = "1923Jtlcom.";
+  var BASE_URL       = "https://jorditor.github.io/Apertura-Garaje/?t=";
 
   var client = null;
   var modoInvitado = false;
   var tokenInvitado = "";
+  var urlActual = "";
 
-  // Leer token de la URL (?t=XXXXXX)
   function getToken() {
     var params = new URLSearchParams(window.location.search);
     return params.get("t") ? params.get("t").toUpperCase() : "";
@@ -82,37 +87,32 @@
 
   function setEstado(s) {
     var el = document.getElementById("estadoMqtt");
+    var btn = document.getElementById("btnAbrir");
+    var btnGen = document.getElementById("btnGenerar");
     if (s === "conectado") {
-      el.textContent = "● Conectado";
-      el.className = "estado-mqtt conectado";
-      document.getElementById("btnAbrir").disabled = false;
+      el.textContent = "● Conectado"; el.className = "estado-mqtt conectado";
+      btn.disabled = false;
+      if (!modoInvitado && btnGen) btnGen.disabled = false;
     } else if (s === "conectando") {
-      el.textContent = "● Conectando...";
-      el.className = "estado-mqtt conectando";
-      document.getElementById("btnAbrir").disabled = true;
+      el.textContent = "● Conectando..."; el.className = "estado-mqtt conectando";
+      btn.disabled = true;
     } else {
-      el.textContent = "● Desconectado";
-      el.className = "estado-mqtt desconectado";
-      document.getElementById("btnAbrir").disabled = true;
+      el.textContent = "● Desconectado"; el.className = "estado-mqtt desconectado";
+      btn.disabled = true;
+      if (btnGen) btnGen.disabled = true;
     }
   }
 
   function conectar() {
     setEstado("conectando");
     var clientId = "web_garaje_" + Math.random().toString(16).substr(2, 8);
-
-    client = mqtt.connect(BROKER, {
-      clientId: clientId,
-      username: USER,
-      password: PASS,
-      reconnectPeriod: 5000,
-      keepalive: 30
-    });
+    client = mqtt.connect(BROKER, { clientId: clientId, username: USER, password: PASS, reconnectPeriod: 5000, keepalive: 30 });
 
     client.on("connect", function() {
       setEstado("conectado");
-      client.subscribe(TOPIC_CONFIRM);
-      client.subscribe(TOPIC_TOKEN_OK);
+      client.subscribe("garaje/confirmacion");
+      client.subscribe("garaje/token_ok");
+      client.subscribe("garaje/token_generado");
     });
 
     client.on("error", function() { setEstado("desconectado"); });
@@ -123,40 +123,39 @@
       var btn = document.getElementById("btnAbrir");
       var st  = document.getElementById("status");
 
-      // Confirmacion hardware
-      if (topic === TOPIC_CONFIRM && msg === "1") {
-        st.textContent = "✓ Puerta abierta confirmada";
-        st.className = "status ok";
+      if (topic === "garaje/confirmacion" && msg === "1") {
+        st.textContent = "✓ Puerta abierta confirmada"; st.className = "status ok";
         setTimeout(function() { st.textContent = ""; st.className = "status"; }, 5000);
       }
 
-      // Respuesta validacion token invitado
-      if (topic === TOPIC_TOKEN_OK) {
+      if (topic === "garaje/token_ok") {
         btn.disabled = false;
         if (msg === "1") {
-          btn.classList.remove("error");
-          btn.classList.add("abierto");
-          btn.textContent = "✓";
-          st.textContent = "✓ Acceso concedido";
-          st.className = "status ok";
-          setTimeout(function() {
-            btn.classList.remove("abierto");
-            btn.textContent = "ABRIR";
-            st.textContent = "";
-            st.className = "status";
-          }, 3000);
+          btn.classList.remove("error"); btn.classList.add("abierto"); btn.textContent = "✓";
+          st.textContent = "✓ Acceso concedido"; st.className = "status ok";
+          setTimeout(function() { btn.classList.remove("abierto"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 3000);
         } else {
-          btn.classList.add("error");
-          btn.textContent = "✗";
-          st.textContent = "Token inválido o caducado";
-          st.className = "status err";
-          setTimeout(function() {
-            btn.classList.remove("error");
-            btn.textContent = "ABRIR";
-            st.textContent = "";
-            st.className = "status";
-          }, 4000);
+          btn.classList.add("error"); btn.textContent = "✗";
+          st.textContent = "Token inválido o caducado"; st.className = "status err";
+          setTimeout(function() { btn.classList.remove("error"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 4000);
         }
+      }
+
+      // Token generado por el C3
+      if (topic === "garaje/token_generado") {
+        var btnGen = document.getElementById("btnGenerar");
+        btnGen.disabled = false; btnGen.textContent = "Generar enlace (4h)";
+        if (msg === "ERROR") {
+          document.getElementById("status").textContent = "Error: sin espacio para más tokens";
+          document.getElementById("status").className = "status err";
+          return;
+        }
+        urlActual = BASE_URL + msg;
+        document.getElementById("tokenGenerado").textContent = msg;
+        document.getElementById("urlGenerada").textContent = urlActual;
+        document.getElementById("enlaceGenerado").style.display = "block";
+        document.getElementById("btnCopiar").textContent = "Copiar enlace";
+        document.getElementById("btnCopiar").className = "btn-copiar";
       }
     });
   }
@@ -165,28 +164,32 @@
     if (!client || !client.connected) return;
     var btn = document.getElementById("btnAbrir");
     var st  = document.getElementById("status");
-
-    btn.disabled = true;
-    btn.textContent = "...";
+    btn.disabled = true; btn.textContent = "...";
     st.textContent = modoInvitado ? "Validando acceso..." : "Enviando orden...";
     st.className = "status ok";
-
     if (modoInvitado) {
-      // Modo invitado: enviar token para validar
-      client.publish(TOPIC_INVITADO, tokenInvitado);
+      client.publish("garaje/invitado", tokenInvitado);
     } else {
-      // Modo admin: apertura directa
-      client.publish(TOPIC_ABRIR, "1");
-      btn.classList.add("abierto");
-      btn.textContent = "✓";
-      setTimeout(function() {
-        btn.disabled = false;
-        btn.classList.remove("abierto");
-        btn.textContent = "ABRIR";
-        st.textContent = "";
-        st.className = "status";
-      }, 3000);
+      client.publish("garaje/abrir", "1");
+      btn.classList.add("abierto"); btn.textContent = "✓";
+      setTimeout(function() { btn.disabled = false; btn.classList.remove("abierto"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 3000);
     }
+  }
+
+  function generarEnlace() {
+    if (!client || !client.connected) return;
+    var btnGen = document.getElementById("btnGenerar");
+    btnGen.disabled = true; btnGen.textContent = "Generando...";
+    document.getElementById("enlaceGenerado").style.display = "none";
+    client.publish("garaje/nuevo_token", "1");
+  }
+
+  function copiarEnlace() {
+    navigator.clipboard.writeText(urlActual).then(function() {
+      var btn = document.getElementById("btnCopiar");
+      btn.textContent = "✓ Copiado";
+      btn.className = "btn-copiar copiado";
+    });
   }
 
   window.onload = function() {
@@ -194,8 +197,10 @@
     if (tokenInvitado) {
       modoInvitado = true;
       document.getElementById("subtitulo").textContent = "Acceso de invitado";
-      document.getElementById("tokenBadge").innerHTML =
-        "<div class='token-badge'>Token: <span>" + tokenInvitado + "</span></div>";
+      document.getElementById("tokenBadge").innerHTML = "<div class='token-badge'>Token: <span>" + tokenInvitado + "</span></div>";
+    } else {
+      // Modo admin: mostrar sección invitar
+      document.getElementById("secInvitar").style.display = "block";
     }
     conectar();
   };
