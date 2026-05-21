@@ -33,6 +33,13 @@
     .token-badge { background: #0f3460; border: 1px solid #2e6da4; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; margin-bottom: 20px; display: inline-block; }
     .token-badge span { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
     .tiempo-restante { font-size: 13px; color: #f0c040; margin-top: 6px; min-height: 18px; }
+    .puerta-estado {
+      font-size: 14px; padding: 6px 16px; border-radius: 20px;
+      display: inline-block; margin-bottom: 16px; transition: all 0.5s;
+    }
+    .puerta-abierta { background: #1a4a1a; color: #4ecca3; border: 1px solid #4ecca3; }
+    .puerta-cerrada { background: #2a2a2a; color: #666;    border: 1px solid #444; }
+    .puerta-unknown { display: none; }
     /* Sección invitar — solo modo admin */
     .seccion-invitar { margin-top: 10px; border-top: 1px solid #2a2a4a; padding-top: 20px; }
     .seccion-invitar h2 { font-size: 14px; color: #aaa; margin-bottom: 14px; letter-spacing: 1px; }
@@ -55,6 +62,7 @@
   <div class="subtitulo" id="subtitulo"></div>
   <div class="estado-mqtt desconectado" id="estadoMqtt">● Desconectado</div>
   <div id="tokenBadge"></div>
+  <div class="puerta-estado puerta-unknown" id="puertaEstado"></div>
   <button class="btn-abrir" id="btnAbrir" onclick="abrir()" disabled>ABRIR</button>
   <div class="status" id="status"></div>
   <div class="tiempo-restante" id="tiempoRestante"></div>
@@ -143,6 +151,7 @@
       client.subscribe("garaje/token_ok");
       client.subscribe("garaje/token_generado");
       client.subscribe("garaje/tiempo_token");
+      client.subscribe("garaje/puerta");
       // Si es invitado, consultar tiempo restante al conectar
       if (modoInvitado) client.publish("garaje/consulta_token", tokenInvitado);
     });
@@ -163,6 +172,17 @@
           document.getElementById("tiempoRestante").textContent = "⚠ Acceso caducado";
           document.getElementById("tiempoRestante").style.color = "#e94560";
           document.getElementById("btnAbrir").disabled = true;
+        }
+      }
+
+      if (topic === "garaje/puerta") {
+        var el = document.getElementById("puertaEstado");
+        if (msg === "abierta") {
+          el.textContent = "▲ Puerta abierta";
+          el.className = "puerta-estado puerta-abierta";
+        } else {
+          el.textContent = "▼ Puerta cerrada";
+          el.className = "puerta-estado puerta-cerrada";
         }
       }
 
