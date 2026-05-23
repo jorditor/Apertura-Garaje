@@ -67,7 +67,7 @@
   <!-- Sección invitar: solo visible en modo admin -->
   <div class="seccion-invitar" id="secInvitar" style="display:none">
     <h2>INVITAR</h2>
-    <button class="btn-inv" id="btnGenerar" onclick="generarEnlace()" disabled>Generar enlace (1h)</button>
+    <button class="btn-inv" id="btnGenerar" onclick="generarEnlace()" disabled>Generar enlace (4h)</button>
     <div class="enlace-generado" id="enlaceGenerado">
       <div class="enlace-token" id="tokenGenerado"></div>
       <div class="enlace-url" id="urlGenerada"></div>
@@ -80,7 +80,7 @@
   var BROKER         = "wss://d3c63be4f2464ff7a1d80943eae17c28.s1.eu.hivemq.cloud:8884/mqtt";
   var USER           = "Jordi";
   var PASS           = "1923Jtlcom.";
-  var BASE_URL = "https://control-puerta.netlify.app/?t=";
+  var BASE_URL = "https://invitado-acceso.netlify.app/?t=";
 
   var client = null;
   var modoInvitado = false;
@@ -206,7 +206,7 @@
       // Token generado por el C3
       if (topic === "garaje/token_generado") {
         var btnGen = document.getElementById("btnGenerar");
-        btnGen.disabled = false; btnGen.textContent = "Generar enlace (1h)";
+        btnGen.disabled = false; btnGen.textContent = "Generar enlace (4h)";
         if (msg === "ERROR") {
           document.getElementById("status").textContent = "Error: sin espacio para más tokens";
           document.getElementById("status").className = "status err";
