@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -42,7 +42,6 @@
       max-width: 90%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
-    /* Estilo exclusivo cuando se confirma la apertura */
     .status.ok  { 
       background: rgba(26, 74, 26, 0.9); 
       color: #4ecca3; 
@@ -50,7 +49,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-    /* Estilo exclusivo cuando da error */
     .status.err { 
       background: rgba(74, 26, 26, 0.9); 
       color: #e94560; 
@@ -62,13 +60,18 @@
     .token-badge { background: #0f3460; border: 1px solid #2e6da4; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; margin-bottom: 20px; display: inline-block; }
     .token-badge span { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
     .tiempo-restante { font-size: 13px; color: #f0c040; margin-top: 6px; min-height: 18px; }
+    
+    /* --- ESTADOS DE LA PUERTA --- */
     .puerta-estado {
       font-size: 14px; padding: 6px 16px; border-radius: 20px;
       display: inline-block; margin-bottom: 16px; transition: all 0.5s;
     }
+    /* El estado abierto se mantiene intacto en verde */
     .puerta-abierta { background: #1a4a1a; color: #4ecca3; border: 1px solid #4ecca3; }
-    .puerta-cerrada { background: #2a2a2a; color: #666;    border: 1px solid #444; }
+    /* Cambiado a un rojo destacado con letras blancas */
+    .puerta-cerrada { background: #4a1a1a; color: #fff;    border: 1px solid #e94560; }
     .puerta-unknown { display: none; }
+    
     /* Sección invitar — solo modo admin */
     .seccion-invitar { margin-top: 10px; border-top: 1px solid #2a2a4a; padding-top: 20px; }
     .seccion-invitar h2 { font-size: 14px; color: #aaa; margin-bottom: 14px; letter-spacing: 1px; }
@@ -129,7 +132,7 @@
   }
 
   function iniciarCuentaAtras(minutos) {
-    minutosRestantes = minutos;
+    minutosRestantes = minutes || minutos;
     document.getElementById("tiempoRestante").textContent = formatTiempo(minutosRestantes);
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(function() {
@@ -142,7 +145,7 @@
       } else {
         document.getElementById("tiempoRestante").textContent = formatTiempo(minutosRestantes);
       }
-    }, 60000);  // actualizar cada minuto
+    }, 60000);
   }
 
   function getToken() {
@@ -179,10 +182,7 @@
       client.subscribe("garaje/token_ok");
       client.subscribe("garaje/token_generado");
       client.subscribe("garaje/tiempo_token");
-      
-      //---------------------------------------------------------------------------
       client.subscribe("garaje/puerta");
-      // Si es invitado, consultar tiempo restante al conectar
       if (modoInvitado) client.publish("garaje/consulta_token", tokenInvitado);
     });
 
@@ -219,7 +219,7 @@
       if (topic === "garaje/confirmacion" && msg === "1") {
         st.textContent = "✓ Puerta abierta confirmada"; st.className = "status ok";
         setTimeout(function() { 
-          st.className = "status"; // Quita el "ok" para que haga transicion fade-out suave
+          st.className = "status"; 
           setTimeout(function() { st.textContent = ""; }, 400); 
         }, 5000);
       }
@@ -245,7 +245,6 @@
         }
       }
 
-      // Token generado por el C3
       if (topic === "garaje/token_generado") {
         var btnGen = document.getElementById("btnGenerar");
         btnGen.disabled = false; btnGen.textContent = "Generar enlace (1h)";
@@ -287,7 +286,7 @@
   function generarEnlace() {
     if (!client || !client.connected) return;
     var btnGen = document.getElementById("btnGenerar");
-    btnGen.disabled = true; btnGen.textContent = "Generating...";
+    btnGen.disabled = true; btnGen.textContent = "Generando...";
     document.getElementById("enlaceGenerado").style.display = "none";
     client.publish("garaje/nuevo_token", "1");
   }
@@ -307,7 +306,6 @@
       document.getElementById("subtitulo").textContent = "Acceso de invitado";
       document.getElementById("tokenBadge").innerHTML = "<div class='token-badge'>Token: <span>" + tokenInvitado + "</span></div>";
     } else {
-      // Modo admin: mostrar sección invitar
       document.getElementById("secInvitar").style.display = "block";
     }
     conectar();
