@@ -1,3 +1,6 @@
+  <!DOCTYPE html>
+<html lang="es">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Garaje</title>
@@ -5,7 +8,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; }
-    .container { text-align: center; padding: 20px 30px; width: 100%; max-width: 380px; }
+    .container { text-align: center; padding: 20px 30px; width: 100%; max-width: 380px; position: relative; }
     h1 { font-size: 22px; color: #aaa; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .subtitulo { font-size: 13px; color: #555; margin-bottom: 16px; }
     .estado-mqtt { font-size: 13px; padding: 6px 16px; border-radius: 20px; display: inline-block; margin-bottom: 30px; }
@@ -24,9 +27,38 @@
     .btn-abrir:disabled { background: radial-gradient(circle at 35% 35%, #555, #444); box-shadow: none; cursor: not-allowed; }
     .btn-abrir.abierto { background: radial-gradient(circle at 35% 35%, #4ecca3, #2eaa83); box-shadow: 0 0 30px rgba(78,204,163,0.5); }
     .btn-abrir.error   { background: radial-gradient(circle at 35% 35%, #e94560, #c0392b); }
-    .status { font-size: 14px; min-height: 20px; color: #aaa; margin-bottom: 20px; }
-    .status.ok  { color: #4ecca3; }
-    .status.err { color: #e94560; }
+    
+    /* --- RECUADRO VISTOSO PARA MENSAJES (STATUS) --- */
+    .status { 
+      font-size: 14px; 
+      font-weight: bold;
+      margin: 15px auto;
+      padding: 12px 20px;
+      border-radius: 10px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.4s ease;
+      display: block;
+      max-width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    /* Estilo exclusivo cuando se confirma la apertura */
+    .status.ok  { 
+      background: rgba(26, 74, 26, 0.9); 
+      color: #4ecca3; 
+      border: 2px solid #4ecca3;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Estilo exclusivo cuando da error */
+    .status.err { 
+      background: rgba(74, 26, 26, 0.9); 
+      color: #e94560; 
+      border: 2px solid #e94560;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
     .token-badge { background: #0f3460; border: 1px solid #2e6da4; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; margin-bottom: 20px; display: inline-block; }
     .token-badge span { color: #4ecca3; font-weight: bold; letter-spacing: 2px; }
     .tiempo-restante { font-size: 13px; color: #f0c040; margin-top: 6px; min-height: 18px; }
@@ -64,7 +96,6 @@
   <div class="status" id="status"></div>
   <div class="tiempo-restante" id="tiempoRestante"></div>
 
-  <!-- Sección invitar: solo visible en modo admin -->
   <div class="seccion-invitar" id="secInvitar" style="display:none">
     <h2>INVITAR</h2>
     <button class="btn-inv" id="btnGenerar" onclick="generarEnlace()" disabled>Generar enlace (1h)</button>
@@ -187,7 +218,10 @@
 
       if (topic === "garaje/confirmacion" && msg === "1") {
         st.textContent = "✓ Puerta abierta confirmada"; st.className = "status ok";
-        setTimeout(function() { st.textContent = ""; st.className = "status"; }, 5000);
+        setTimeout(function() { 
+          st.className = "status"; // Quita el "ok" para que haga transicion fade-out suave
+          setTimeout(function() { st.textContent = ""; }, 400); 
+        }, 5000);
       }
 
       if (topic === "garaje/token_ok") {
@@ -195,11 +229,19 @@
         if (msg === "1") {
           btn.classList.remove("error"); btn.classList.add("abierto"); btn.textContent = "✓";
           st.textContent = "✓ Acceso concedido"; st.className = "status ok";
-          setTimeout(function() { btn.classList.remove("abierto"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 3000);
+          setTimeout(function() { 
+            btn.classList.remove("abierto"); btn.textContent = "ABRIR"; 
+            st.className = "status"; 
+            setTimeout(function() { st.textContent = ""; }, 400);
+          }, 3000);
         } else {
           btn.classList.add("error"); btn.textContent = "✗";
           st.textContent = "Token inválido o caducado"; st.className = "status err";
-          setTimeout(function() { btn.classList.remove("error"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 4000);
+          setTimeout(function() { 
+            btn.classList.remove("error"); btn.textContent = "ABRIR"; 
+            st.className = "status"; 
+            setTimeout(function() { st.textContent = ""; }, 400);
+          }, 4000);
         }
       }
 
@@ -234,14 +276,18 @@
     } else {
       client.publish("garaje/abrir", "1");
       btn.classList.add("abierto"); btn.textContent = "✓";
-      setTimeout(function() { btn.disabled = false; btn.classList.remove("abierto"); btn.textContent = "ABRIR"; st.textContent = ""; st.className = "status"; }, 3000);
+      setTimeout(function() { 
+        btn.disabled = false; btn.classList.remove("abierto"); btn.textContent = "ABRIR"; 
+        st.className = "status"; 
+        setTimeout(function() { st.textContent = ""; }, 400);
+      }, 3000);
     }
   }
 
   function generarEnlace() {
     if (!client || !client.connected) return;
     var btnGen = document.getElementById("btnGenerar");
-    btnGen.disabled = true; btnGen.textContent = "Generando...";
+    btnGen.disabled = true; btnGen.textContent = "Generating...";
     document.getElementById("enlaceGenerado").style.display = "none";
     client.publish("garaje/nuevo_token", "1");
   }
